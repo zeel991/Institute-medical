@@ -1,0 +1,6 @@
+
+> medical-facilities-backend@1.0.0 dev
+> tsx watch src/server.ts
+
+🚀 Server running on port 3000
+📊 Environment: development

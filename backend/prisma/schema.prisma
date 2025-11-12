@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  medical_staff
+  facility_manager
+  resident
+}
+
+enum FacilityType {
+  medical
+  general
+}
+
+enum ComplaintStatus {
+  new
+  assigned
+  in_progress
+  resolved
+  closed
+}
+
+enum Priority {
+  low
+  medium
+  high
+  critical
+}
+
+enum AppointmentStatus {
+  pending
+  confirmed
+  completed
+  cancelled
+}
+
+// --- RESTORING MEDICAL MODELS ---
+model MedicalRecord {
+  id                String              @id @default(uuid())
+  userId            String              @unique
+  user              User                @relation(fields: [userId], references: [id])
+  
+  bloodType         String?
+  allergies         String?
+  chronicConditions String?
+  emergencyContact  String?
+  
+  medicalLogs       MedicalLog[]
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  @@map("medical_records")
+}
+
+model MedicalLog {
+  id                String              @id @default(uuid())
+  recordId          String
+  record            MedicalRecord       @relation(fields: [recordId], references: [id])
+  
+  staffId           String
+  staff             User                @relation("MedicalStaffLog", fields: [staffId], references: [id])
+  
+  timestamp         DateTime            @default(now())
+  diagnosis         String
+  treatment         String
+  medication        String?
+  
+  @@map("medical_logs")
+}
+
+// --- RESTORING APPOINTMENT MODEL ---
+model Appointment {
+  id                String              @id @default(uuid())
+  
+  studentId         String
+  student           User                @relation("StudentAppointment", fields: [studentId], references: [id])
+  
+  staffId           String?
+  staff             User?               @relation("StaffAppointment", fields: [staffId], references: [id])
+  
+  scheduledTime     DateTime
+  reason            String
+  status            AppointmentStatus   @default(pending)
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  @@map("appointments")
+}
+
+// --- USER MODEL (RESTORING RELATIONS) ---
+model User {
+  id                String              @id @default(uuid())
+  email             String              @unique
+  password          String
+  name              String
+  role              Role                @default(resident)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  complaintsCreated Complaint[]         @relation("ComplaintCreator")
+  assignedComplaints ComplaintAssignment[]
+  notifications     Notification[]
+  entryExitLogs     EntryExitLog[]
+  
+  medicalRecord     MedicalRecord? // RESTORED
+  medicalLogs       MedicalLog[]          @relation("MedicalStaffLog") // RESTORED
+  
+  appointmentsAsStudent Appointment[]   @relation("StudentAppointment") // RESTORED
+  appointmentsAsStaff   Appointment[]   @relation("StaffAppointment") // RESTORED
+  
+  // Note: Report relations are kept out for simplicity, only restoring core medical/scheduling for now.
+
+  @@map("users")
+}
+
+// --- EXISTING MODELS (COMPLAINT, FACILITY, ETC.) ---
+model Facility {
+  id          String        @id @default(uuid())
+  name        String        @unique
+  type        FacilityType
+  description String?
+  location    String?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  complaints  Complaint[]
+  
+  @@map("facilities")
+}
+
+model Complaint {
+  id          String          @id @default(uuid())
+  title       String
+  description String
+  priority    Priority        @default(medium)
+  status      ComplaintStatus @default(new)
+  attachment  String?
+  
+  facilityId  String
+  facility    Facility        @relation(fields: [facilityId], references: [id])
+  
+  createdById String
+  createdBy   User            @relation("ComplaintCreator", fields: [createdById], references: [id])
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  resolvedAt  DateTime?
+  closedAt    DateTime?
+  
+  assignments ComplaintAssignment[]
+  statusHistory ComplaintStatusHistory[]
+  
+  @@map("complaints")
+}
+
+model ComplaintAssignment {
+  id          String    @id @default(uuid())
+  
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  
+  assignedToId String
+  assignedTo   User     @relation(fields: [assignedToId], references: [id])
+  
+  assignedAt  DateTime  @default(now())
+  notes       String?
+  isActive    Boolean   @default(true)
+  
+  @@map("complaint_assignments")
+}
+
+model ComplaintStatusHistory {
+  id          String          @id @default(uuid())
+  
+  complaintId String
+  complaint   Complaint       @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  
+  fromStatus  ComplaintStatus?
+  toStatus    ComplaintStatus
+  notes       String?
+  changedAt   DateTime        @default(now())
+  
+  @@map("complaint_status_history")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@map("notifications")
+}
+
+model EntryExitLog {
+  id        String   @id @default(uuid())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  type      String
+  timestamp DateTime @default(now())
+  location  String?
+  notes     String?
+  
+  @@map("entry_exit_logs")
+}
