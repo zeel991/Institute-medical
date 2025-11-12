@@ -7,7 +7,9 @@ import {
   MdOutlineReport,
   MdPeople,
   MdExitToApp,
-  MdSupervisorAccount
+  MdSupervisorAccount,
+  MdInventory,
+  MdCalendarToday // New Icon
 } from 'react-icons/md';
 
 const navItems = [
@@ -16,6 +18,18 @@ const navItems = [
     label: 'Dashboard',
     icon: MdDashboard,
     roles: ['admin', 'facility_manager', 'medical_staff', 'resident'],
+  },
+  {
+    path: '/scheduling',
+    label: 'Appointments',
+    icon: MdCalendarToday,
+    roles: ['admin', 'medical_staff', 'resident'], // Restored Appointment visibility
+  },
+  {
+    path: '/inventory',
+    label: 'Medicine Inventory',
+    icon: MdInventory,
+    roles: ['admin', 'medical_staff', 'resident', 'facility_manager'],
   },
   {
     path: '/complaints',
@@ -52,7 +66,7 @@ const Sidebar: React.FC = () => {
   const userRole = user.role;
 
   return (
-    <div className="flex flex-col w-64 h-full bg-indigo-800 text-white shadow-lg">
+    <div className="flex flex-col w-64 min-h-screen bg-indigo-800 text-white shadow-lg">
       <div className="p-4 text-2xl font-bold border-b border-indigo-700">
         Hostel Care
       </div>

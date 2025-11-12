@@ -6,10 +6,20 @@ const prisma = new PrismaClient();
 
 export const getDashboardStats = async (req: AuthRequest, res: Response) => {
   try {
-    const totalComplaints = await prisma.complaint.count();
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+    
+    // Define the base WHERE clause: filter by user ID if they are a resident
+    const baseWhere: any = {};
+    if (userRole === 'resident') {
+        baseWhere.createdById = userId;
+    }
+
+    const totalComplaints = await prisma.complaint.count({ where: baseWhere });
 
     const openComplaints = await prisma.complaint.count({
       where: {
+        ...baseWhere, // Apply user filter
         status: {
           not: ComplaintStatus.closed,
         },
@@ -18,12 +28,15 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
 
     const closedComplaints = await prisma.complaint.count({
       where: {
+        ...baseWhere, // Apply user filter
         status: ComplaintStatus.closed,
       },
     });
 
+    // Calculate Average Resolution Time only for complaints created by the resident
     const resolvedComplaints = await prisma.complaint.findMany({
       where: {
+        ...baseWhere, // Apply user filter
         status: {
           in: [ComplaintStatus.resolved, ComplaintStatus.closed],
         },
@@ -40,16 +53,17 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     let avgResolutionTime = 0;
     if (resolvedComplaints.length > 0) {
       const totalTime = resolvedComplaints.reduce((sum, complaint) => {
-        const created = new Date(complaint.
-        createdAt).getTime();
+        const created = new Date(complaint.createdAt).getTime();
         const resolved = new Date(complaint.resolvedAt!).getTime();
         return sum + (resolved - created);
       }, 0);
+      // Convert milliseconds to hours, rounded to one decimal place
       avgResolutionTime = Math.round((totalTime / resolvedComplaints.length / (1000 * 60 * 60)) * 10) / 10;
     }
 
     const complaintsByStatus = await prisma.complaint.groupBy({
       by: ['status'],
+      where: baseWhere, // Apply user filter
       _count: {
         status: true,
       },
@@ -62,6 +76,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
 
     const complaintsByPriority = await prisma.complaint.groupBy({
       by: ['priority'],
+      where: baseWhere, // Apply user filter
       _count: {
         priority: true,
       },

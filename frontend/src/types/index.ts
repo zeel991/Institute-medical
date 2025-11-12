@@ -59,6 +59,28 @@ export interface MedicalLog {
   medication: string | null;
 }
 
+export interface Appointment {
+  id: string;
+  student: { id: string; name: string; email: string };
+  staff: { id: string; name: string; email: true } | null;
+  scheduledTime: string;
+  reason: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  createdAt: string;
+}
+
+export interface Medicine {
+  id: string;
+  name: string;
+  description?: string;
+  stockLevel: number;
+  unit: string;
+  expiryDate?: string;
+  location?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DetailedComplaint {
   id: string;
   title: string;

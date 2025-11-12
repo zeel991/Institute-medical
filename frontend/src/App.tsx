@@ -13,7 +13,9 @@ import ComplaintCreate from './components/complaints/ComplaintCreate';
 import EntryExitLogs from './components/entryExit/EntryExitLogs';
 import Placeholder from './components/common/Placeholder'; 
 import UserManagement from './components/users/UserManagement';
-import MedicalRecordView from './components/medical/MedicalRecordView'; // RESTORED IMPORT
+import MedicalRecordView from './components/medical/MedicalRecordView';
+import MedicineInventory from './components/inventory/MedicineInventory';
+import Scheduling from './components/scheduling/Scheduling'; // RESTORED IMPORT
 
 // Import necessary icon library for the sidebar
 import 'react-icons';
@@ -56,6 +58,13 @@ const AppContent: React.FC = () => {
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/facilities" element={<ProtectedRoute><FacilityManagement /></ProtectedRoute>} />
         
+        {/* Inventory Route */}
+        <Route path="/inventory" element={<ProtectedRoute><MedicineInventory /></ProtectedRoute>} />
+        
+        {/* Scheduling Route */}
+        <Route path="/scheduling" element={<ProtectedRoute><Scheduling /></ProtectedRoute>} />
+
+
         {/* Complaints Routes */}
         <Route path="/complaints" element={<ProtectedRoute><ComplaintList /></ProtectedRoute>} />
         <Route path="/complaints/new" element={<ProtectedRoute><ComplaintCreate /></ProtectedRoute>} />
@@ -65,7 +74,7 @@ const AppContent: React.FC = () => {
         
         {/* Management Routes */}
         <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-        <Route path="/medical/:userId/record" element={<ProtectedRoute><MedicalRecordView /></ProtectedRoute>} /> {/* RESTORED ROUTE */}
+        <Route path="/medical/:userId/record" element={<ProtectedRoute><MedicalRecordView /></ProtectedRoute>} /> 
         
         {/* Catch-all route */}
         <Route path="*" element={<ProtectedRoute><Placeholder title="404 Not Found" /></ProtectedRoute>} />

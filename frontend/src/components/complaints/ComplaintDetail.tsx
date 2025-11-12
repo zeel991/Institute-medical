@@ -7,7 +7,7 @@ import {
   MdArrowBack, MdAssignment, MdCheck, MdTimeline, MdPriorityHigh, MdDownload 
 } from 'react-icons/md';
 
-// Helper for status badge styling (omitted for brevity)
+// Helper for status badge styling
 const getStatusBadge = (status: string) => {
     switch (status) {
         case 'new': return 'bg-blue-100 text-blue-800';
@@ -34,28 +34,31 @@ const ComplaintDetail: React.FC = () => {
   const isManager = user?.role === 'facility_manager' || isAdmin;
   const isStaff = user?.role === 'medical_staff' || isManager;
   
-  // State for Assignment Form (omitted for brevity)
+  // State for Assignment Form
   const [assignmentId, setAssignmentId] = useState('');
   const [assignmentNotes, setAssignmentNotes] = useState('');
 
-  // State for Status Update Form (omitted for brevity)
+  // State for Status Update Form
   const [nextStatus, setNextStatus] = useState('');
   const [statusNotes, setStatusNotes] = useState('');
   
+  // Define valid status transitions in the frontend to populate the dropdown
   const validTransitions: Record<string, string[]> = {
       new: ['assigned'],
       assigned: ['in_progress'],
-      in_progress: ['resolved'],
-      resolved: ['closed'],
+      in_progress: ['resolved'], // Transition from In Progress leads to Resolved
+      resolved: ['closed'],      // Transition from Resolved leads to Closed
       closed: [],
   };
 
-  // --- Data Fetching (omitted for brevity) ---
+  // --- Data Fetching ---
   const fetchComplaintAndStaff = async () => {
     try {
+      // 1. Fetch Complaint Detail
       const complaintResponse = await api.get<DetailedComplaint>(`/complaints/${id}`);
       setComplaint(complaintResponse.data);
       
+      // 2. Fetch staff users for assignment (if manager/admin)
       if (isManager) {
         const staffResponse = await api.get<User[]>('/users'); 
         setStaffUsers(staffResponse.data);
@@ -64,19 +67,13 @@ const ComplaintDetail: React.FC = () => {
       setIsLoading(false);
     } catch (err: any) {
       console.error('Failed to fetch complaint or staff:', err);
-      if (err.response?.status === 403 && !complaint) {
-          setError('Could not load complaint details. Check permissions.');
-      } else {
-          setError(err.response?.data?.error || 'Failed to load complaint details.');
-      }
+      setError(err.response?.data?.error || 'Failed to load complaint details.');
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (id && user) {
-        fetchComplaintAndStaff();
-    }
+    fetchComplaintAndStaff();
   }, [id, user]);
 
   useEffect(() => {
@@ -90,7 +87,7 @@ const ComplaintDetail: React.FC = () => {
     }
   }, [complaint]);
   
-  // --- Action Handlers (omitted for brevity) ---
+  // --- Action Handlers ---
   const handleAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isManager || !assignmentId) return;
@@ -111,6 +108,12 @@ const ComplaintDetail: React.FC = () => {
     e.preventDefault();
     if (!isStaff || !nextStatus || !complaint) return;
     
+    // REQUIRE notes if resolving or closing
+    if ((nextStatus === 'resolved' || nextStatus === 'closed') && !statusNotes.trim()) {
+        alert("Resolution notes are required to change status to Resolved or Closed.");
+        return;
+    }
+    
     try {
       await api.patch(`/complaints/${id}/status`, {
         status: nextStatus,
@@ -124,7 +127,7 @@ const ComplaintDetail: React.FC = () => {
   };
 
 
-  // --- Render Logic (omitted for brevity) ---
+  // --- Render Logic ---
   if (isLoading) {
     return <div className="text-center py-10">Loading complaint details...</div>;
   }
@@ -157,7 +160,7 @@ const ComplaintDetail: React.FC = () => {
           </span>
         </div>
 
-        {/* Complaint Details Grid (omitted for brevity) */}
+        {/* Complaint Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-gray-700">
           <DetailItem label="Facility" value={complaint.facility.name} />
           <DetailItem label="Priority" value={complaint.priority} icon={MdPriorityHigh} />
@@ -173,8 +176,7 @@ const ComplaintDetail: React.FC = () => {
               label="Attachment" 
               value={
                 <a 
-                  // FIX: Simplified URL construction to reliably hit http://localhost:3000/uploads/...
-                  href={`${api.defaults.baseURL?.replace('/api', '')}${complaint.attachment}`}
+                  href={complaint.attachment}
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex items-center text-indigo-600 hover:text-indigo-800"
@@ -192,10 +194,10 @@ const ComplaintDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* Staff/Manager Actions (omitted for brevity) */}
+      {/* Staff/Manager Actions */}
       {(isManager || isStaff) && complaint.status !== 'closed' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* 1. Assignment Form (omitted for brevity) */}
+              {/* 1. Assignment Form (Manager/Admin Only) */}
               {isManager && (
                   <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 space-y-4">
                       <h3 className="text-xl font-semibold text-indigo-700 flex items-center"><MdAssignment className='mr-2'/> Re/Assign Complaint</h3>
@@ -235,7 +237,7 @@ const ComplaintDetail: React.FC = () => {
                   </div>
               )}
               
-              {/* 2. Status Update Form (omitted for brevity) */}
+              {/* 2. Status Update Form (Staff/Manager/Admin) */}
               {isStaff && (
                   <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 space-y-4">
                       <h3 className="text-xl font-semibold text-green-700 flex items-center"><MdCheck className='mr-2'/> Update Status</h3>
@@ -250,6 +252,7 @@ const ComplaintDetail: React.FC = () => {
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white"
                                 disabled={validTransitions[currentStatusKey]?.length === 0}
                               >
+                                {/* Populate options based on valid transitions from the current status */}
                                 {validTransitions[currentStatusKey]?.map(status => (
                                     <option key={status} value={status}>{status.replace(/_/g, ' ')}</option>
                                 ))}
@@ -281,7 +284,7 @@ const ComplaintDetail: React.FC = () => {
           </div>
       )}
       
-      {/* Status History Timeline (omitted for brevity) */}
+      {/* Status History Timeline */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
         <h3 className="text-xl font-semibold text-gray-800 flex items-center mb-4"><MdTimeline className='mr-2'/> Status History</h3>
         <ol className="relative border-l border-gray-200 ml-4">                  
@@ -309,7 +312,7 @@ const ComplaintDetail: React.FC = () => {
   );
 };
 
-// --- Small helper component for consistent detail display (omitted for brevity) ---
+// --- Small helper component for consistent detail display ---
 interface DetailItemProps {
     label: string;
     value: React.ReactNode;

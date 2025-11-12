@@ -1,3 +1,9 @@
+#!/bin/bash
+
+echo "📝 Restoring functional scheduling logic in backend controller..."
+
+# --- Update scheduling.controller.ts ---
+cat > backend/src/controllers/scheduling.controller.ts << 'EOF'
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../types';
@@ -114,3 +120,10 @@ export const updateAppointment = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to update appointment' });
   }
 };
+EOF
+
+echo "✅ Backend scheduling logic restored (availability check temporarily disabled)."
+
+# --- 2. Restart Backend Server ---
+cd backend
+npm run dev

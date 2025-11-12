@@ -9,6 +9,7 @@ import complaintsRoutes from './routes/complaints.routes.ts';
 import dashboardRoutes from './routes/dashboard.routes.ts';
 import entryExitRoutes from './routes/entryExit.routes.ts';
 import usersRoutes from './routes/users.routes.ts';
+import medicineRoutes from './routes/medicine.routes.ts';
 import medicalRoutes from './routes/medical.routes.ts'; // RESTORED
 import schedulingRoutes from './routes/scheduling.routes.ts'; // RESTORED
 import { errorHandler } from './middleware/errorHandler.middleware.ts';
@@ -34,6 +35,7 @@ app.use('/api/complaints', complaintsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/entry-exit', entryExitRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/medicine', medicineRoutes);
 app.use('/api/medical', medicalRoutes); // RESTORED
 app.use('/api/scheduling', schedulingRoutes); // RESTORED
 

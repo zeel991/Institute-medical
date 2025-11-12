@@ -41,7 +41,24 @@ enum AppointmentStatus {
   cancelled
 }
 
-// --- RESTORING MEDICAL MODELS ---
+// --- NEW MEDICINE MODEL ---
+model Medicine {
+  id                String              @id @default(uuid())
+  name              String              @unique
+  description       String?
+  stockLevel        Int                 @default(0)
+  unit              String              // e.g., tablet, bottle, vial
+  expiryDate        DateTime?
+  location          String?             // Storage location in the clinic
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  @@map("medicines")
+}
+
+
+// --- EXISTING MODELS ---
 model MedicalRecord {
   id                String              @id @default(uuid())
   userId            String              @unique
@@ -76,7 +93,6 @@ model MedicalLog {
   @@map("medical_logs")
 }
 
-// --- RESTORING APPOINTMENT MODEL ---
 model Appointment {
   id                String              @id @default(uuid())
   
@@ -96,7 +112,6 @@ model Appointment {
   @@map("appointments")
 }
 
-// --- USER MODEL (RESTORING RELATIONS) ---
 model User {
   id                String              @id @default(uuid())
   email             String              @unique
@@ -111,18 +126,15 @@ model User {
   notifications     Notification[]
   entryExitLogs     EntryExitLog[]
   
-  medicalRecord     MedicalRecord? // RESTORED
-  medicalLogs       MedicalLog[]          @relation("MedicalStaffLog") // RESTORED
+  medicalRecord     MedicalRecord?
+  medicalLogs       MedicalLog[]          @relation("MedicalStaffLog")
   
-  appointmentsAsStudent Appointment[]   @relation("StudentAppointment") // RESTORED
-  appointmentsAsStaff   Appointment[]   @relation("StaffAppointment") // RESTORED
-  
-  // Note: Report relations are kept out for simplicity, only restoring core medical/scheduling for now.
+  appointmentsAsStudent Appointment[]   @relation("StudentAppointment")
+  appointmentsAsStaff   Appointment[]   @relation("StaffAppointment")
 
   @@map("users")
 }
 
-// --- EXISTING MODELS (COMPLAINT, FACILITY, ETC.) ---
 model Facility {
   id          String        @id @default(uuid())
   name        String        @unique

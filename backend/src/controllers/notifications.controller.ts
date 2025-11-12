@@ -50,7 +50,7 @@ export const markAsRead = async (req: AuthRequest, res: Response) => {
         await prisma.notification.updateMany({
             where: { 
                 id: id,
-                userId: userId // Ensure user can only mark their own notification
+                userId: userId 
             },
             data: { isRead: true },
         });
