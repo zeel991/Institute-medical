@@ -29,36 +29,36 @@ const ComplaintDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Auth checks
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'facility_manager' || isAdmin;
   const isStaff = user?.role === 'medical_staff' || isManager;
   
-  // State for Assignment Form
   const [assignmentId, setAssignmentId] = useState('');
   const [assignmentNotes, setAssignmentNotes] = useState('');
-
-  // State for Status Update Form
   const [nextStatus, setNextStatus] = useState('');
   const [statusNotes, setStatusNotes] = useState('');
   
-  // Define valid status transitions in the frontend to populate the dropdown
   const validTransitions: Record<string, string[]> = {
       new: ['assigned'],
       assigned: ['in_progress'],
-      in_progress: ['resolved'], // Transition from In Progress leads to Resolved
-      resolved: ['closed'],      // Transition from Resolved leads to Closed
+      in_progress: ['resolved'],
+      resolved: ['closed'],
       closed: [],
   };
 
-  // --- Data Fetching ---
+  // --- Utility: Get Full Backend URL for Static Files ---
+  const getFullAttachmentUrl = (filePath: string) => {
+    const baseURL = api.defaults.baseURL || 'http://localhost:3000/api';
+    // Remove the '/api' part and append the file path (e.g., /uploads/...)
+    return `${baseURL.replace('/api', '')}${filePath}`;
+  };
+
+  // --- Data Fetching (Rest omitted for brevity) ---
   const fetchComplaintAndStaff = async () => {
     try {
-      // 1. Fetch Complaint Detail
       const complaintResponse = await api.get<DetailedComplaint>(`/complaints/${id}`);
       setComplaint(complaintResponse.data);
       
-      // 2. Fetch staff users for assignment (if manager/admin)
       if (isManager) {
         const staffResponse = await api.get<User[]>('/users'); 
         setStaffUsers(staffResponse.data);
@@ -87,7 +87,7 @@ const ComplaintDetail: React.FC = () => {
     }
   }, [complaint]);
   
-  // --- Action Handlers ---
+  // --- Action Handlers (Rest omitted for brevity) ---
   const handleAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isManager || !assignmentId) return;
@@ -108,7 +108,6 @@ const ComplaintDetail: React.FC = () => {
     e.preventDefault();
     if (!isStaff || !nextStatus || !complaint) return;
     
-    // REQUIRE notes if resolving or closing
     if ((nextStatus === 'resolved' || nextStatus === 'closed') && !statusNotes.trim()) {
         alert("Resolution notes are required to change status to Resolved or Closed.");
         return;
@@ -127,7 +126,7 @@ const ComplaintDetail: React.FC = () => {
   };
 
 
-  // --- Render Logic ---
+  // --- Render Logic (Rest omitted for brevity) ---
   if (isLoading) {
     return <div className="text-center py-10">Loading complaint details...</div>;
   }
@@ -176,7 +175,8 @@ const ComplaintDetail: React.FC = () => {
               label="Attachment" 
               value={
                 <a 
-                  href={complaint.attachment}
+                  // FIX APPLIED HERE: Use full backend URL
+                  href={getFullAttachmentUrl(complaint.attachment)}
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex items-center text-indigo-600 hover:text-indigo-800"
@@ -194,10 +194,10 @@ const ComplaintDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* Staff/Manager Actions */}
+      {/* Staff/Manager Actions (Rest omitted for brevity) */}
       {(isManager || isStaff) && complaint.status !== 'closed' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* 1. Assignment Form (Manager/Admin Only) */}
+              {/* 1. Assignment Form (omitted for brevity) */}
               {isManager && (
                   <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 space-y-4">
                       <h3 className="text-xl font-semibold text-indigo-700 flex items-center"><MdAssignment className='mr-2'/> Re/Assign Complaint</h3>
@@ -237,7 +237,7 @@ const ComplaintDetail: React.FC = () => {
                   </div>
               )}
               
-              {/* 2. Status Update Form (Staff/Manager/Admin) */}
+              {/* 2. Status Update Form (omitted for brevity) */}
               {isStaff && (
                   <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 space-y-4">
                       <h3 className="text-xl font-semibold text-green-700 flex items-center"><MdCheck className='mr-2'/> Update Status</h3>
@@ -252,7 +252,6 @@ const ComplaintDetail: React.FC = () => {
                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white"
                                 disabled={validTransitions[currentStatusKey]?.length === 0}
                               >
-                                {/* Populate options based on valid transitions from the current status */}
                                 {validTransitions[currentStatusKey]?.map(status => (
                                     <option key={status} value={status}>{status.replace(/_/g, ' ')}</option>
                                 ))}
@@ -284,7 +283,7 @@ const ComplaintDetail: React.FC = () => {
           </div>
       )}
       
-      {/* Status History Timeline */}
+      {/* Status History Timeline (Rest omitted for brevity) */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
         <h3 className="text-xl font-semibold text-gray-800 flex items-center mb-4"><MdTimeline className='mr-2'/> Status History</h3>
         <ol className="relative border-l border-gray-200 ml-4">                  
@@ -312,7 +311,7 @@ const ComplaintDetail: React.FC = () => {
   );
 };
 
-// --- Small helper component for consistent detail display ---
+// --- Small helper component for consistent detail display (Rest omitted for brevity) ---
 interface DetailItemProps {
     label: string;
     value: React.ReactNode;
